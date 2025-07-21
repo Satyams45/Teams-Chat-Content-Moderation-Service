@@ -1,0 +1,186 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "contentVersion": "1.0.0.0",
+        "triggers": {
+            "When_a_new_channel_message_is_added": {
+                "recurrence": {
+                    "interval": 3,
+                    "frequency": "Minute"
+                },
+                "evaluatedRecurrence": {
+                    "interval": 3,
+                    "frequency": "Minute"
+                },
+                "splitOn": "@triggerBody()",
+                "type": "ApiConnection",
+                "inputs": {
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['teams']['connectionId']"
+                        }
+                    },
+                    "method": "get",
+                    "path": "/trigger/beta/teams/@{encodeURIComponent('dfd82fc8-39fb-42c9-a1ba-94c85519ddda')}/channels/@{encodeURIComponent('19:yJQubRy0MeSdZrLidiA7V3WOiNFFznI-hyBUEqBS_A01@thread.tacv2')}/messages",
+                    "queries": {
+                        "$top": 50
+                    }
+                }
+            }
+        },
+        "actions": {
+            "Initialize_variables": {
+                "runAfter": {},
+                "type": "InitializeVariable",
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "chatContent",
+                            "type": "string",
+                            "value": "@{triggerOutputs()?['body']['text']}"
+                        }
+                    ]
+                }
+            },
+            "HTTP": {
+                "runAfter": {
+                    "Initialize_variables": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Http",
+                "inputs": {
+                    "uri": "https://preprocess-fn-app-dqdbh8a6dredhbgn.canadacentral-01.azurewebsites.net/",
+                    "method": "POST",
+                    "headers": {
+                        "Content-Type: application/json": ""
+                    },
+                    "body": {
+                        "text": "@{variables('chatContent')}"
+                    }
+                },
+                "runtimeConfiguration": {
+                    "contentTransfer": {
+                        "transferMode": "Chunked"
+                    }
+                }
+            },
+            "Parse_JSON": {
+                "runAfter": {
+                    "HTTP": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ParseJson",
+                "inputs": {
+                    "content": "Body",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "cleanedText": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "Condition": {
+                "actions": {},
+                "runAfter": {
+                    "Parse_JSON": [
+                        "Succeeded"
+                    ]
+                },
+                "else": {
+                    "actions": {}
+                },
+                "expression": {
+                    "and": [
+                        {
+                            "greater": [
+                                "@length(body('Parse_JSON')?['Terms'])",
+                                0
+                            ]
+                        },
+                        {
+                            "equals": [
+                                "",
+                                ""
+                            ]
+                        }
+                    ]
+                },
+                "type": "If"
+            },
+            "Condition_1": {
+                "actions": {},
+                "runAfter": {
+                    "Condition": [
+                        "Succeeded"
+                    ]
+                },
+                "else": {
+                    "actions": {}
+                },
+                "expression": {
+                    "and": [
+                        {
+                            "equals": [
+                                "If yes",
+                                ""
+                            ]
+                        }
+                    ]
+                },
+                "type": "If"
+            },
+            "Send_an_email_(V2)": {
+                "runAfter": {
+                    "Condition_1": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ApiConnection",
+                "inputs": {
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['outlook']['connectionId']"
+                        }
+                    },
+                    "method": "post",
+                    "body": {
+                        "To": "pans0012@algonquinlive.com",
+                        "Subject": "Teams Chat Policy Violation Detected",
+                        "Body": "<p class=\"editor-paragraph\">An inappropriate message was detected in Microsoft Teams.<br><br>📩 Message:<br>@{variables('chatContent')}<br><br>🚫 Detected Terms:<br>@{body('Parse_JSON')?['Terms']}<br><br>Time: @{utcNow()}<br><br>Please take appropriate action.</p><br>",
+                        "Importance": "Normal"
+                    },
+                    "path": "/v2/Mail"
+                }
+            }
+        },
+        "outputs": {},
+        "parameters": {
+            "$connections": {
+                "type": "Object",
+                "defaultValue": {}
+            }
+        }
+    },
+    "parameters": {
+        "$connections": {
+            "type": "Object",
+            "value": {
+                "teams": {
+                    "id": "/subscriptions/63593e07-b1bc-4b20-8c26-b7fafac46e9f/providers/Microsoft.Web/locations/canadacentral/managedApis/teams",
+                    "connectionId": "/subscriptions/63593e07-b1bc-4b20-8c26-b7fafac46e9f/resourceGroups/Lab-3/providers/Microsoft.Web/connections/teams",
+                    "connectionName": "teams"
+                },
+                "outlook": {
+                    "id": "/subscriptions/63593e07-b1bc-4b20-8c26-b7fafac46e9f/providers/Microsoft.Web/locations/canadacentral/managedApis/outlook",
+                    "connectionId": "/subscriptions/63593e07-b1bc-4b20-8c26-b7fafac46e9f/resourceGroups/Lab-3/providers/Microsoft.Web/connections/outlook",
+                    "connectionName": "outlook"
+                }
+            }
+        }
+    }
+}
