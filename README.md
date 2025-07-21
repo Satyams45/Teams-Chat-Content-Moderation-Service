@@ -5,8 +5,7 @@ This project implements a Microsoft Teams chat content moderation service using 
 ---
 
 ## 📋 Flowchart
-
-![Moderation Flowchart](./screenshots/moderation-flowchart.png)
+![Screenshot 2025-07-20 232116](https://github.com/user-attachments/assets/beff5174-ea10-4bec-84b2-eac3fff5b766)
 
 ---
 
