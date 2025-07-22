@@ -73,5 +73,9 @@ This project implements a Microsoft Teams chat content moderation service using 
 │   └── moderation-flowchart.png
 ├── README.md                   # Project Documentation (This file)
 ```
+## 🎥 Demo Video
+
+[🔗 Watch the Demo on YouTube](https://youtu.be/gKXRPU89Fs4)
+
 
 ---
